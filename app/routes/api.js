@@ -7,27 +7,114 @@ const Desarrolladora = require('../models/desarrolladora');
 const Genero = require('../models/genero');
 const Idioma = require('../models/idioma');
 
-api.get('/', (req, res) => {
-    console.log(req)
+/**
+ * CRUD videojuegos
+ */
+api.get('/juego/:id', (req, res) => {
+    VideoJuego.findById({_id: req.params.id}, (err, videojuego) => {
+        if(err){
+            res.status(400);
+            res.json({
+                'error': 'Error al buscar el videojuego',
+                'message': err
+            });
+        }else{
+            res.status(200);
+            res.json(videojuego);
+        }
+    }).populate('id_desarrolladora')
+    .populate('id_genero')
+    .populate('id_idioma');
+});
+
+api.get('/juegos', (req, res) => {
     VideoJuego.find({}, (err, videojuegos) => {
         if(err){
             res.status(400);
             res.json({
-                'error': 'Error al buscar lista de videojuegos'
+                'error': 'Error al buscar lista de videojuegos',
+                'message': err
             });
         }else{
             res.status(200);
             res.json(videojuegos);
         }
+    }).populate('id_desarrolladora')
+    .populate('id_genero')
+    .populate('id_idioma');
+});
+
+api.post('/crear', (req, res) => {
+    let newJuego = new VideoJuego({
+        id_desarrolladora: req.body.id_desarrolladora,
+        id_genero: req.body.id_genero,
+        id_idioma: req.body.id_idioma,
+        nombre: req.body.txt_nombre,
+        precio: req.body.num_precio,
+        descripcion: req.body.txt_descripcion
+    });
+
+    newJuego.save().then(function(videojuego){
+        res.status(200);
+        res.json(videojuego);
+    }, function(err){
+        res.status(400);
+        res.json({
+            'error': 'Ocurrio un erro al guardar el videojuego ',
+            'message': err
+        });
     });
 });
 
-/**
- * CRUD videojuegos
- */
-api.post('/crear_juego', (req, res) => {
-    let newJuego = new VideoJuego({
+api.put('/actualizar/:id', (req, res) => {
+    var juego_update = req.body;
+    // var updJuego = {};
+    
+    // if(juego_update.nombre){
+    //     updJuego.nombre = juego_update.nombre;
+    // }
+    
+    // if(juego_update.descripcion){
+    //     updJuego.descripcion = juego_update.descripcion;
+    // }
 
+    // if(juego_update.habilitado){
+    //     updJuego.habilitado = juego_update.habilitado;
+    // }
+    
+    // if(!updJuego){
+    //     res.status(400);
+    //     res.json({
+    //         "error":"Error al actualizar la desarrolladora"
+    //     });
+    // } else {
+    VideoJuego.update({_id: mongoose.Types.ObjectId(req.params.id)}, juego_update, {}, function(err, juego_nuevo){
+        if(err){
+            res.status(400);
+            res.send({
+                'error': err,
+                'message': err
+            });
+        }
+        res.status(200);
+        res.json(juego_nuevo);
+    });
+});
+
+api.delete('/eliminar/:id', (req, res) => {
+    VideoJuego.remove({'_id':req.params.id}, function(err, videojuegos){
+        if(err){
+            res.status(400);
+            res.json({
+                'error': 'Error al eliminar el videojuego',
+                'message': err
+            });
+        }else{
+            res.status(200);
+            res.json({
+                'success': 'Se elimino correctamente el videojuego'
+            });
+        }
     });
 });
 /**
@@ -51,7 +138,8 @@ api.post('/desarrolladora/crear', (req, res) => {
     }, function(err){
         res.status(400);
         res.json({
-            'error': 'Ocurrio un erro al guarsdar la desarrolladora'
+            'error': 'Ocurrio un erro al guarsdar la desarrolladora',
+            'message': err
         });
     });
 });
@@ -61,7 +149,8 @@ api.get('/desarrolladora', (req, res) => {
         if(err){
             res.status(400);
             res.json({
-                'error': 'Error al listar desarrolladoras'
+                'error': 'Error al listar desarrolladoras',
+                'message': err
             });
         }else{
             res.status(200);
@@ -89,14 +178,15 @@ api.put('/desarrolladora/actualizar/:id', (req, res) => {
     if(!updDes){
         res.status(400);
         res.json({
-            "error":"Error al actualizar la desarrolladora"
+            "error": "Faltan parametros"
         });
     } else {
         Desarrolladora.update({_id: mongoose.Types.ObjectId(req.params.id)},updDes, {}, function(err, desarrolladora_update){
         if(err){
             res.status(400);
             res.send({
-                'error': err
+                'error': "Error al actualizar la desarrolladora",
+                'message': err
             });
         }
         res.status(200);
@@ -110,7 +200,8 @@ api.delete('/desarrolladora/eliminar/:id', (req, res) => {
         if(err){
             res.status(400);
             res.json({
-                'error': 'Error al eliminar la desarrolladora'
+                'error': 'Error al eliminar la desarrolladora',
+                'message': err
             });
         }else{
             res.status(200);
@@ -140,7 +231,8 @@ api.post('/genero/crear', (req, res) => {
     }, function(err){
         res.status(400);
         res.json({
-            'error': 'Ocurrio un erro al guardar el genero'
+            'error': 'Ocurrio un erro al guardar el genero',
+            'message': err
         });
     });
 });
@@ -150,7 +242,8 @@ api.get('/genero', (req, res) => {
         if(err){
             res.status(400);
             res.json({
-                'error': 'Error al listar generos'
+                'error': 'Error al listar generos',
+                'message': err
             });
         }else{
             res.status(200);
@@ -174,14 +267,15 @@ api.put('/genero/actualizar/:id', (req, res) => {
     if(!updGen){
         res.status(400);
         res.json({
-            "error":"Error al actualizar el genero"
+            "error": "Faltan parametros"
         });
     } else {
         Genero.update({_id: mongoose.Types.ObjectId(req.params.id)},updGen, {}, function(err, genero_update){
         if(err){
             res.status(400);
             res.send({
-                'error': err
+                'error': "Error al actualizar el genero",
+                'message': err
             });
         }
         res.status(200);
@@ -195,7 +289,8 @@ api.delete('/genero/eliminar/:id', (req, res) => {
         if(err){
             res.status(400);
             res.json({
-                'error': 'Error al eliminar el genero'
+                'error': 'Error al eliminar el genero',
+                'message': err
             });
         }else{
             res.status(200);
@@ -225,7 +320,8 @@ api.post('/idioma/crear', (req, res) => {
     }, function(err){
         res.status(400);
         res.json({
-            'error': 'Ocurrio un erro al guardar el idioma'
+            'error': 'Ocurrio un erro al guardar el idioma',
+            'message': err
         });
     });
 });
@@ -235,7 +331,8 @@ api.get('/idioma', (req, res) => {
         if(err){
             res.status(400);
             res.json({
-                'error': 'Error al listar idiomas'
+                'error': 'Error al listar idiomas',
+                'message': err
             });
         }else{
             res.status(200);
@@ -259,14 +356,15 @@ api.put('/idioma/actualizar/:id', (req, res) => {
     if(!updIdi){
         res.status(400);
         res.json({
-            "error":"Error al actualizar el idioma"
+            "error":"Faltan parametros"
         });
     } else {
         Idioma.update({_id: mongoose.Types.ObjectId(req.params.id)},updIdi, {}, function(err, idioma_update){
         if(err){
             res.status(400);
             res.send({
-                'error': err
+                'error': "Error al actualizar el idioma",
+                'message': err
             });
         }else{
             res.status(200);
@@ -281,7 +379,8 @@ api.delete('/idioma/eliminar/:id', (req, res) => {
         if(err){
             res.status(400);
             res.json({
-                'error': 'Error al eliminar el idioma'
+                'error': 'Error al eliminar el idioma',
+                'message': err
             });
         }else{
             res.status(200);
